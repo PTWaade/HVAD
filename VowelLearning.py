@@ -78,7 +78,7 @@ class schwa:
         # Initiating PyAudio and start stream (recording)
         p=pyaudio.PyAudio() 
         stream=p.open(format=pyaudio.paInt16,channels=1,rate=RATE,input=True,
-                    frames_per_buffer=CHUNK, input_device_index=3 ) # Remove input_device_index=3 to use computer mic
+                    frames_per_buffer=CHUNK, input_device_index=2) # Remove input_device_index=3 to use computer mic
 
         frames = []
         # Store data in chunks for self.seconds number of seconds
@@ -291,7 +291,7 @@ class schwa:
                 ax.scatter(self.F_ratio1, self.F_ratio2, s=50, marker = "X", c="black")
             
             # Set axis limits
-            ax.axis([0.09,0.22,0.3,0.9]) 
+            ax.axis([0.09,0.22,0.3,0.9])
 
             # Remove ticks and tick labels
             ax.axes.xaxis.set_visible(False)

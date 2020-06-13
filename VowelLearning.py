@@ -13,6 +13,10 @@ import random
 import statistics as stat
 import pandas as pd
 import os
+from shapely.geometry import MultiPoint
+from descartes.patch import PolygonPatch
+import glob
+
 
 # class that altenates between displaying recording message and blank space
 # Each time it is initiated
@@ -40,45 +44,30 @@ class schwa:
     ###################
     path = os.path.dirname(os.path.abspath(__file__))+"/"
 
-    seconds = 0.5 # number of seconds to record
+    seconds = 1 # number of seconds to record
+
+    device_index = 3 # CLO = 3, MMI = ?
 
     # Formant data for plotting icons in foprmant space 
     data = pd.read_csv(path + "data/formant_data.csv") # Load data
-    data = data[data.sex=="m"]
+
     f1f3_avgs = []
     f2f3_avgs = []
     f1_avgs = []
     f2_avgs = []
 
-    # Looping through vowel numbers and compute mean of ratio values
-    # The data is stored in the fxf3_avgs lists
-    for i in range(11):
-        x = i + 1
-        sub = data[data.vowel == x]
-        f1f3 = stat.mean(sub["f1/f3"].tolist())
-        f2f3 = stat.mean(sub["f2/f3"].tolist())
-        f1f3_avgs.append(f1f3)
-        f2f3_avgs.append(f2f3)
-    
-    for i in range(11):
-        x = i + 1
-        sub = data[data.vowel == x]
-        f1 = stat.mean(sub["f1"].tolist())
-        f2 = stat.mean(sub["f2"].tolist())
-        f1_avgs.append(f1)
-        f2_avgs.append(f2)
-
     # Containers for the ratio values of user signal
     F_ratio1 = 0
     F_ratio2 = 0
-    F_ratio1_cal = 0
-    F_ratio2_cal = 0
+    
     F1 = 0
     F2 = 0
-    F1_cal = 0
-    F2_cal = 0
+    F3 = 0
 
-    scale = "ratio"
+
+    scale = "freq"
+
+    sex_show = "all"
     
     # Value that controls wether to show error message in plot
     noisy = False
@@ -97,7 +86,7 @@ class schwa:
         # Initiating PyAudio and start stream (recording)
         p=pyaudio.PyAudio() 
         stream=p.open(format=pyaudio.paInt16,channels=1,rate=RATE,input=True,
-                    frames_per_buffer=CHUNK, input_device_index=2) # Remove input_device_index=3 to use computer mic
+                    frames_per_buffer=CHUNK, input_device_index=self.device_index) # Remove input_device_index=3 to use computer mic
 
         frames = []
         # Store data in chunks for self.seconds number of seconds
@@ -141,10 +130,10 @@ class schwa:
         # The variance of the time points in the  window is stored for for each formant in lists
         # Then each time step of these lists are summed together across lists
         # The minimum variance window is the most stable point of the vowel.
-        w_size = 4 # window size
+        w_size = 5 # window size
         F1_var_list = []
         F2_var_list = []
-        F3_var_list = []
+        #F3_var_list = []
 
         # Loop though formant lists
         for w in range(len(F1_list)-w_size):
@@ -152,18 +141,22 @@ class schwa:
             #Determine window
             F1_window = F1_list[w:w+w_size] 
             F2_window = F2_list[w:w+w_size] 
-            F3_window = F3_list[w:w+w_size]
+            #F3_window = F3_list[w:w+w_size]
 
             # Compute variance - log is used to normalize the values
-            F1_var_list.append(np.log(stat.variance(F1_window)))
-            F2_var_list.append(np.log(stat.variance(F2_window)))
-            F3_var_list.append(np.log(stat.variance(F3_window)))
+            F1_var_list.append(
+                stat.variance(np.log(F1_window)) / stat.mean(np.log(F1_window))
+                )
+            F2_var_list.append(
+                stat.variance(np.log(F2_window)) / stat.mean(np.log(F2_window))
+            )
+            #F3_var_list.append(np.log(stat.variance(F3_window)))
         
         # Loop though windows and make variance sums
         # F3 is down weighted a bit, for balance, as it is typically higher
         varSum_list = []
         for i in range(len(F1_var_list)):
-            varSum = F1_var_list[i] + F2_var_list[i] + F3_var_list[i]*0.8 
+            varSum = F1_var_list[i] + F2_var_list[i]
             varSum_list.append(varSum)
 
         # find the minimum variance window and save its index
@@ -174,14 +167,6 @@ class schwa:
         F2 = stat.mean(F2_list[index:index+w_size])
         F3 = stat.mean(F3_list[index:index+w_size])
 
-        # Sketchy hack to overcome issue with backvowels
-        # The problem is that when F1 and F2 get too close the analysis will interpret them as 1
-        # When vowel 9 ("o") is selected if F2 is very high, treat F3 ass F2 and F2 as F1+100
-        # NOT SURE IF IT WORKS AS INTENDET!!!
-        if (select_vowel.vowel == 9) & (F2 > 1500):
-            F3 = F2
-            F2 = F1+100
-
         # Make formant ratios and store them in the class variables.
         schwa.F1 = F1
         schwa.F2 = F2
@@ -189,26 +174,47 @@ class schwa:
         schwa.F_ratio1 = F1/F3
         schwa.F_ratio2 = F2/F3
 
+        print(F1_var_list[index]*1000000)
+        print(F2_var_list[index]*1000000)
+
+
         # If the variance is two high the signal is two noisy
         # VARIANCE THRESHOLDS ARE SET SEMI RANDOMLY - NEEDS MORE TESTING
-        if (F1_var_list[index]>7)|(F2_var_list[index]>10)|(F3_var_list[index]>11.5):
+        if (F1_var_list[index]*1000000>30)|(F2_var_list[index]*1000000>30):
             schwa.noisy = True
         else:
             schwa.noisy = False
-
-        """
-        # Some testing printing
-        print(schwa.F_ratio1)
-        print(schwa.F_ratio2)
-        print(F3)
-        print("------")
-        print(F1_var_list[index])
-        print(F2_var_list[index])
-        print(F3_var_list[index])
-        print("------")
-        """
     # END FUNCTION
 
+    # Update function for updating the data before plotting
+    def data_update(self):
+        
+        schwa.data = pd.read_csv(self.path + "data/formant_data.csv") # Load data
+        schwa.data = schwa.data[schwa.data.cut==0] 
+        schwa.f1f3_avgs = []
+        schwa.f2f3_avgs = []
+        schwa.f1_avgs = []
+        schwa.f2_avgs = []
+
+        if self.sex_show == "female":
+            schwa.data = schwa.data[schwa.data.sex=="f"] 
+        if self.sex_show == "male":
+            schwa.data = schwa.data[schwa.data.sex=="m"]
+        vs = [1,2,3,4,5,6,7,10]
+        for i in vs:
+            sub = schwa.data[schwa.data.vowel == i]
+            f1f3 = stat.mean(sub["f1/f3"].tolist())
+            f2f3 = stat.mean(sub["f2/f3"].tolist())
+            schwa.f1f3_avgs.append(f1f3)
+            schwa.f2f3_avgs.append(f2f3)
+        
+        for i in vs:
+            sub = schwa.data[schwa.data.vowel == i]
+            f1 = stat.mean(sub["f1"].tolist())
+            f2 = stat.mean(sub["f2"].tolist())
+            schwa.f1_avgs.append(f1)
+            schwa.f2_avgs.append(f2)
+ 
     #Function for getting the images (used by in the plot function below)   
     def getImage(self, path, zoom):
         return OffsetImage(plt.imread(path), zoom=zoom)
@@ -216,25 +222,11 @@ class schwa:
     # Function that generates the right plot and shows it in the interface
     # The reset option is used to remove user stuff while recording (primarily to remove error message)
     def plot(self, reset = False):
-
+        self.data_update()
         # Reset option
         if reset:
-            if select_vowel.vowel == 0: # If no target vowel is selected
-                if rep.r == "GEO": # if the rep is geometric
-                    window.plot = ImageTk.PhotoImage(Image.open(self.path + "img/geometric_plots/grey.png"))
-                    plot_show.configure(image=window.plot)
-                else: # if the rep is IPA
-                    window.plot = ImageTk.PhotoImage(Image.open(self.path + "img/IPA_plots/grey.png"))
-                    plot_show.configure(image=window.plot)
-            else: # If some target vowel is selected
-                v = str(select_vowel.vowel) # Get the selected vowel
-                if rep.r == "GEO": # if the rep is geometric
-                    window.plot = ImageTk.PhotoImage(Image.open(self.path + "img/geometric_plots/" + v + ".png"))
-                    plot_show.configure(image=window.plot)
-                else:  # if the rep is IPA
-                    window.plot = ImageTk.PhotoImage(Image.open(self.path + "img/IPA_plots/" + v + ".png"))
-                    plot_show.configure(image=window.plot)
-        
+            # DO STUFF HERE
+            print("---")
         # If not not reset option
         else: 
             # Type of symbols
@@ -247,13 +239,14 @@ class schwa:
             target_idx = select_vowel.vowel-1
 
             # How much to zoom the pictures
-            zoom = 0.3
+            zoom = 0.4
 
             # Set the paths to the images
             prefix_green = "img/" + symboltype + "_green/"
             prefix_grey = "img/" + symboltype + "_grey/"
 
             # Names of the pictures
+            """
             paths = [
                 '1.png',
                 '2.png',
@@ -266,16 +259,26 @@ class schwa:
                 '9.png',
                 '10.png',
                 '11.png']
-
+            """
+            paths = [
+                '1.png',
+                '2.png',
+                '3.png',
+                '4.png',
+                '5.png',
+                '6.png',
+                '7.png',
+                '10.png']
             # These are the indeces for each picture
-            idxs = [0,1,2,3,4,5,6,7,8,9,10]
+            #idxs = [0,1,2,3,4,5,6,7,8,9,10]
+            idxs = [0,1,2,3,4,5,6,9,]
 
             if self.scale == "ratio":
-                x = self.f1f3_avgs
-                y = self.f2f3_avgs
+                y = self.f1f3_avgs
+                x = self.f2f3_avgs
             else:
-                x = self.f1_avgs
-                y = self.f2_avgs
+                y = self.f1_avgs
+                x = self.f2_avgs
 
             # Make a figure
             fig, ax = plt.subplots()
@@ -284,7 +287,8 @@ class schwa:
 
             # If the class variable noisy is true, just display error message
             if self.noisy:
-                ax.text(0.155, 0.58, "Sorry, the vowel could not be calculated. \nPlease try again.", size=20, rotation=5,
+                schwa.F1 == 0
+                ax.text(1800, 730, "Attention: Analysis unreliable", size=10, rotation=0,
                     ha="center", va="center",
                     bbox=dict(boxstyle="round",
                         ec=(1., 0.5, 0.5),
@@ -298,6 +302,7 @@ class schwa:
                 for idx, x0, y0, p in zip(idxs, x, y, paths):
                     # If the idx is the target
                     if idx == target_idx:
+                        
                         # Create the green image on with the given coordinates
                         ab = AnnotationBbox(self.getImage(self.path + prefix_green + p, zoom), (x0, y0), frameon=False)
                     # Otherwise
@@ -307,47 +312,98 @@ class schwa:
                     
                     # And add the picture to the plot
                     ax.add_artist(ab)
-                """
-                #Target vowels from previous demo (for reference. should be removed in the final version)   
-                target1_F1 = [0.122,0.139,0.142]
-                target1_F2 = [0.784,0.794,0.781]
-                ax.scatter(target1_F1, target1_F2, s=100, marker="o", c="blue")
-                target2_F1 = [0.196, 0.179, 0.179]
-                target2_F2 = [0.806, 0.786, 0.807]
-                ax.scatter(target2_F1, target2_F2, s=100, marker="o", c="red")
-                """
 
-                # TESTING STUFF
-                for v in [1,2,3,4,5,6,7,8,9,10,11]:
+                colors = ["#FF5733", "#2E7D32", "#FB8C00", "#1565C0", "#EED918", "#F571C4", "#9575CD", "#1565C0", "#2E7D32", "#AF601A", "#6D4C41"]
+        
+                if select_vowel.vowel == 0:
+                    #for v in [1,2,3,4,5,6,7,8,9,10,11]:
+                    for v in [1,2,3,4,5,6,7,10]:
+                        v_data = schwa.data[schwa.data.vowel == v]
+                        if self.scale == "ratio":
+                            destr_f1f3 = v_data["f1/f3"].tolist()
+                            destr_f2f3 = v_data["f2/f3"].tolist()
+                            #ax.scatter(destr_f1f3, destr_f2f3, color = colors[v-1])
+                            
+                            if len(destr_f1f3)>2:
+                                xy_list = []
+                                for i in range(len(destr_f1f3)):
+                                    xy = (destr_f1f3[i], destr_f2f3[i])
+                                    xy_list.append(xy)
+                                points = MultiPoint(xy_list)
+                                hull = points.convex_hull
+                                patch = PolygonPatch(hull, alpha=0.3, zorder=2, edgecolor=colors[v-1], facecolor=colors[v-1])
+                                ax.add_patch(patch)
+                        else:    
+                            destr_f1 = v_data["f1"].tolist()
+                            destr_f2 = v_data["f2"].tolist()
+                            #ax.scatter(destr_f2, destr_f1, color = colors[v-1])
+                            
+                            if len(destr_f1)>2:
+                                xy_list = []
+                                for i in range(len(destr_f1)):
+                                    xy = (destr_f2[i], destr_f1[i])
+                                    xy_list.append(xy)
+
+                                points = MultiPoint(xy_list)
+                                hull = points.convex_hull
+                                patch = PolygonPatch(hull, alpha=0.3, zorder=2, edgecolor=colors[v-1], facecolor=colors[v-1])
+                                ax.add_patch(patch)
+                else:
+                    v = select_vowel.vowel
                     v_data = self.data[self.data.vowel == v]
                     if self.scale == "ratio":
                         destr_f1f3 = v_data["f1/f3"].tolist()
                         destr_f2f3 = v_data["f2/f3"].tolist()
-                        if v == select_vowel.vowel:
-                            ax.scatter(destr_f1f3, destr_f2f3, marker = "X")
-                        else:
-                            ax.scatter(destr_f1f3, destr_f2f3)
+                        #ax.scatter(destr_f2f3, destr_f1f3)
+                        if len(destr_f1f3)>2:
+                            xy_list = []
+                            for i in range(len(destr_f1f3)):
+                                xy = (destr_f1f3[i], destr_f2f3[i])
+                                xy_list.append(xy)
+                            points = MultiPoint(xy_list)
+                            hull = points.convex_hull
+                            patch = PolygonPatch(hull, alpha=0.3, zorder=2, edgecolor=colors[v-1], facecolor=colors[v-1])
+                            ax.add_patch(patch)
                     else:    
                         destr_f1 = v_data["f1"].tolist()
                         destr_f2 = v_data["f2"].tolist()
-                        if v == select_vowel.vowel:
-                            ax.scatter(destr_f1, destr_f2, marker = "X")
-                        else:
-                            ax.scatter(destr_f1, destr_f2)
+                        #ax.scatter(destr_f2, destr_f1)
+                        if len(destr_f1)>2:
+                            xy_list = []
+                            for i in range(len(destr_f1)):
+                                xy = (destr_f2[i], destr_f1[i])
+                                xy_list.append(xy)
+
+                            points = MultiPoint(xy_list)
+                            hull = points.convex_hull
+                            patch = PolygonPatch(hull, alpha=0.3, zorder=2, edgecolor=colors[v-1], facecolor=colors[v-1])
+                            ax.add_patch(patch)
                     
 
                 # The user formant ratios from recording, marked with an X
-                if self.scale == "ratio":
-                    x = self.F_ratio1 - self.F_ratio1_cal
-                    y = self.F_ratio2 - self.F_ratio2_cal
-                else:
-                    x = self.F1 - self.F1_cal
-                    y = self.F2 - self.F1_cal
-                ax.scatter(x, y, s=50, marker = "X", c="black")
+                if self.F1 != 0:
+                    if self.scale == "ratio":
+                        y = self.F_ratio1
+                        x = self.F_ratio2
+                    else:
+                        y = self.F1
+                        x = self.F2
+                    ax.scatter(x, y, s=50, marker = "X", c="black")
             
 
             # Set axis limits
-            ax.axis([0.09,0.22,0.3,0.9])
+            # Set axis limits
+            if self.scale == "ratio":
+                ax.axis([0.02,0.3,0,1]) 
+            else:
+                if ((self.F1 < 700) & (self.F1 > 150) & (self.F2 < 2900) & (self.F2 > 750)):
+                    ax.axis([2900,750,700,150])
+                else:
+                    ax.axis([3000,400,1000,100])
+                if self.F1 == 0:
+                    ax.axis([2900,750,700,150])
+                if self.noisy:
+                    ax.axis([2900,750,700,150])
 
             # Remove ticks and tick labels
             ax.axes.xaxis.set_visible(False)
@@ -408,17 +464,6 @@ class select_vowel:
         v_button11.configure(image=window.v11)
     # END FUNCTION
 
-    # Function that changes the target vowel in the plot
-    def change_plot(self):
-        v = str(self.vowel)
-        if rep.r == "GEO":
-            window.plot = ImageTk.PhotoImage(Image.open(schwa.path + "img/geometric_plots/" + v + ".png"))
-            plot_show.configure(image=window.plot)
-        else:
-            window.plot = ImageTk.PhotoImage(Image.open(schwa.path + "img/IPA_plots/" + v + ".png"))
-            plot_show.configure(image=window.plot)
-    # END FUNCTION
-
     # The 11 functions each dedicated to a vowel button
     # They rest the buttons to grey, change the selected vowel and make that green
     # Both on the button and in the plot
@@ -427,67 +472,72 @@ class select_vowel:
         select_vowel.vowel = 1
         window.v1 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/1.png"))
         v_button1.configure(image=window.v1)
-        self.change_plot()
+        schwa().plot()
     def v2(self):
         self.reset_buttons()
         select_vowel.vowel = 2
         window.v2 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/2.png"))
         v_button2.configure(image=window.v2)
-        self.change_plot()
+        schwa().plot()
     def v3(self):
         self.reset_buttons()
         select_vowel.vowel = 3
         window.v3 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/3.png"))
         v_button3.configure(image=window.v3)
-        self.change_plot()
+        schwa().plot()
     def v4(self):
         self.reset_buttons()
         select_vowel.vowel = 4
         window.v4 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/4.png"))
         v_button4.configure(image=window.v4)
-        self.change_plot()
+        schwa().plot()
     def v5(self):
         self.reset_buttons()
         select_vowel.vowel = 5
         window.v5 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/5.png"))
         v_button5.configure(image=window.v5)
-        self.change_plot()
+        schwa().plot()
     def v6(self):
         self.reset_buttons()
         select_vowel.vowel = 6
         window.v6 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/6.png"))
         v_button6.configure(image=window.v6)
-        self.change_plot()
+        schwa().plot()
     def v7(self):
         self.reset_buttons()
         select_vowel.vowel = 7
         window.v7 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/7.png"))
         v_button7.configure(image=window.v7)
-        self.change_plot()
+        schwa().plot()
     def v8(self):
         self.reset_buttons()
         select_vowel.vowel = 8
         window.v8 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/8.png"))
         v_button8.configure(image=window.v8)
-        self.change_plot()
+        schwa().plot()
     def v9(self):
         self.reset_buttons()
         select_vowel.vowel = 9
         window.v9 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/9.png"))
         v_button9.configure(image=window.v9)
-        self.change_plot()
+        schwa().plot()
     def v10(self):
         self.reset_buttons()
         select_vowel.vowel = 10
         window.v10 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/10.png"))
         v_button10.configure(image=window.v10)
-        self.change_plot()
+        schwa().plot()
     def v11(self):
         self.reset_buttons()
         select_vowel.vowel = 11
         window.v11 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/11.png"))
         v_button11.configure(image=window.v11)
-        self.change_plot()
+        schwa().plot()
+    
+    def reset_vowel(self):
+        select_vowel.vowel = 0
+        self.reset_buttons()
+        schwa().plot()
     # END OF THE 11 FUNCTION
 # END CLASS
 
@@ -564,21 +614,8 @@ class rep:
         v_button11.configure(image=window.v11)
 
         # Update the plot in the interface
-        if select_vowel.vowel == 0:
-            if rep.r == "GEO":
-                window.plot = ImageTk.PhotoImage(Image.open(schwa.path + "img/geometric_plots/grey.png"))
-                plot_show.configure(image=window.plot)
-            else:
-                window.plot = ImageTk.PhotoImage(Image.open(schwa.path + "img/IPA_plots/grey.png"))
-                plot_show.configure(image=window.plot)
-        else:
-            v = str(select_vowel.vowel)
-            if rep.r == "GEO":
-                window.plot = ImageTk.PhotoImage(Image.open(schwa.path + "img/geometric_plots/" + v + ".png"))
-                plot_show.configure(image=window.plot)
-            else:
-                window.plot = ImageTk.PhotoImage(Image.open(schwa.path + "img/IPA_plots/" + v + ".png"))
-                plot_show.configure(image=window.plot)
+        schwa().plot()
+
     # END FUNCTION
 # END CLASS
 
@@ -606,34 +643,6 @@ def go():
     # Maybe this needs to be adjusted on slower computers?
 # END FUNCTION
 
-def cal_ratio():
-    schwa.F_ratio1_cal = schwa.F_ratio1 - schwa.f1f3_avgs[0]
-    schwa.F_ratio2_cal = schwa.F_ratio2 - schwa.f2f3_avgs[0]
-def cal_freq():
-    schwa.F1_cal = schwa.F2 - schwa.f1_avgs[0]
-    schwa.F2_cal = schwa.F2 - schwa.f2_avgs[0]
-    print(schwa.F1_cal)
-
-def calibrate():
-
-    rec_time = int(1000*schwa.seconds) # convert to miliseconds
-
-    # Reset plot
-    schwa().plot(reset=True)
-
-    # Start recording
-    message() # Show recording message
-    window.after(10, schwa().record) # Record
-
-    #Recording stop (after recording time)
-    window.after(rec_time, message)
-    window.after(rec_time+20, schwa().formants) # wait 20 miliseconds and do formant analysis
-
-    window.after(rec_time+40, cal_ratio)
-    window.after(rec_time+45, cal_freq)
-
-# END FUNCTION
-
 # Function that plays back the sound recorded from the user
 def playSound():
     wave_obj = sa.WaveObject.from_wave_file(schwa.path + "audio/sound.wav")
@@ -642,18 +651,31 @@ def playSound():
 # Function that plays back the prerecorded sounds of the target vowel
 def playTarget():
     if select_vowel.vowel != 0:
-        targets = ["f2"]
-        target = random.choice(targets)
         vowel = str(select_vowel.vowel)
-        wave_obj = sa.WaveObject.from_wave_file(schwa.path + "audio/target/" + vowel+"/"+target + ".wav")
+        targets = glob.glob(schwa.path + "audio/target/" + vowel + "/*.wav")
+        target = random.choice(targets)
+        wave_obj = sa.WaveObject.from_wave_file(target)
         play_obj = wave_obj.play()
 
 def scale_ratio():
     schwa.scale = "ratio"
+    schwa().plot()
 def scale_freq():
     schwa.scale = "freq"
+    schwa().plot()
 
-
+def sex_change_f():
+    schwa.sex_show = "female"
+    instr["text"] = "  Sex set to female  "
+    schwa().plot()
+def sex_change_m():
+    schwa.sex_show = "male"
+    instr["text"] = "   Sex set to male  "
+    schwa().plot()
+def sex_change_all():
+    schwa.sex_show = "all"
+    instr["text"] = "   Sex set to all  "
+    schwa().plot()
 
 
 ######################################################################################
@@ -666,7 +688,7 @@ def scale_freq():
 window = Tk()
 
 # The title of the window
-window.title("HVAD - Vowel Learning Tool")
+window.title("HVAD - Help with Vowel Acquisition for Danish")
 
 # Get logo and display in grid
 window.logo = ImageTk.PhotoImage(Image.open(schwa.path + "img/HVADlogo.png"))
@@ -707,14 +729,14 @@ v_button11 = Button(window, command=select_vowel().v11, image=window.v11)
 v_button1.grid(row=12, column=1)
 v_button2.grid(row=13, column=1)
 v_button3.grid(row=14, column=1)
-v_button4.grid(row=12, column=2)
-v_button5.grid(row=13, column=2)
-v_button6.grid(row=14, column=2)
-v_button7.grid(row=12, column=3)
-v_button8.grid(row=13, column=3)
-v_button9.grid(row=14, column=3)
-v_button10.grid(row=12, column=4)
-v_button11.grid(row=13, column=4)
+v_button4.grid(row=15, column=1)
+v_button5.grid(row=12, column=2)
+v_button6.grid(row=13, column=2)
+v_button7.grid(row=14, column=2)
+#v_button8.grid(row=13, column=3)
+#v_button9.grid(row=14, column=3)
+v_button10.grid(row=15, column=2)
+#v_button11.grid(row=13, column=4)
 
 # Go button
 goStyle = tkFont.Font(family="Lucida Grande", size=15) # Styling of the text
@@ -728,18 +750,26 @@ instr.grid(row=18, column=1, columnspan=4) # Place in grid
 # Change representation button
 Button(window, text="Change representation", width = 30, command=rep().change_rep).grid(row=19, column=1, columnspan=4)
 
-# calibrate button
-Button(window, text="Calibrate", width = 30, command=calibrate).grid(row=20, column=1, columnspan=4)
-
 #scale buttons
-Button(window, text="Ratio", width = 15, command=scale_ratio).grid(row=21, column=1, columnspan=2)
-Button(window, text="Freq", width = 15, command=scale_freq).grid(row=21, column=3, columnspan=2)
+#Button(window, text="Ratio", width = 15, command=scale_ratio).grid(row=21, column=1, columnspan=2)
+#Button(window, text="Freq", width = 15, command=scale_freq).grid(row=21, column=3, columnspan=2)
+
+# Sex change buttons
+Button(window, text="Female", width = 8, command=sex_change_f).grid(row=22, column=1, columnspan=1)
+Button(window, text="Male", width = 8, command=sex_change_m).grid(row=22, column=2, columnspan=1)
+Button(window, text="All", width = 8, command=sex_change_all).grid(row=22, column=3, columnspan=1)
+
+#reset
+Button(window, text="Reset", width = 8, command=select_vowel().reset_vowel).grid(row=22, column=4, columnspan=1)
 
 # Display plot in grid
 window.plot = ImageTk.PhotoImage(Image.open(schwa.path + "img/geometric_plots/grey.png"))
 plot_show = Label(window, image=window.plot)
 plot_show.grid(row=1, column=0, rowspan=40)
 
+
+
+schwa().plot()
 # Show the interface
 window.mainloop()
 

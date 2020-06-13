@@ -279,8 +279,8 @@ class schwa:
             x = self.f1f3_avgs
             y = self.f2f3_avgs
         else:
-            x = self.f1_avgs
-            y = self.f2_avgs
+            y = self.f1_avgs
+            x = self.f2_avgs
 
         # Make a figure
         fig, ax = plt.subplots()
@@ -324,12 +324,12 @@ class schwa:
                 else:    
                     destr_f1 = v_data["f1"].tolist()
                     destr_f2 = v_data["f2"].tolist()
-                    ax.scatter(destr_f1, destr_f2, color = colors[v-1])
+                    ax.scatter(destr_f2, destr_f1, color = colors[v-1])
                     
                     if len(destr_f1)>2:
                         xy_list = []
                         for i in range(len(destr_f1)):
-                            xy = (destr_f1[i], destr_f2[i])
+                            xy = (destr_f2[i], destr_f1[i])
                             xy_list.append(xy)
 
                         points = MultiPoint(xy_list)
@@ -355,15 +355,15 @@ class schwa:
                 x = self.F_ratio1
                 y = self.F_ratio2
             else:
-                x = self.F1
-                y = self.F2
+                y = self.F1
+                x = self.F2
             ax.scatter(x, y, s=50, marker = "X", c="black")
 
         # Set axis limits
         if self.scale == "ratio":
             ax.axis([0.02,0.3,0,1]) 
         else:
-            ax.axis([50,800,100,3000]) 
+            ax.axis([3000,100,800,50]) 
 
         # Save the plot in the img folder as plot.png
         fig.savefig(self.path + "img/plot_rec.png")
@@ -702,4 +702,20 @@ a_m1 = 423, 1905, 2360
 a_m2 = 434, 2184, 2782
 434/2782 = 0.156
 2184/2782 = 0.785
+"""
+"""
+
+Opdater plot haløj
+
+Add eksempel ord
+add cut outlier
+hvis x kommer udenfor -> zoom ud
+fjern o u og scwa -> med toggle
+
+2 rækker i e æ a...
+
+reset? 
+Error message
+
+
 """

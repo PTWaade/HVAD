@@ -6,7 +6,7 @@ import statistics as stat
 path = os.path.dirname(os.path.abspath(__file__))+"/" 
 
 data = pd.read_csv(path + "data/formant_data.csv")
-
+pd.head(data)
 f1f3_avgs = []
 f2f3_avgs = []
 for i in range(11):

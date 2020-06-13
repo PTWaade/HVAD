@@ -29,7 +29,6 @@ class message:
     # END FUNCTION
 # END CLASS
 
-
 # Class that contains the main functionality of HVAD
 #   - Recording and storing sound
 #   - Formant analysis
@@ -39,14 +38,18 @@ class schwa:
     ###################
     # Class variables #
     ###################
-    path = os.path.dirname(os.path.abspath(__file__))+"/" 
+    path = os.path.dirname(os.path.abspath(__file__))+"/"
 
-    seconds = 2 # number of seconds to record
+    seconds = 0.5 # number of seconds to record
 
     # Formant data for plotting icons in foprmant space 
-    data = pd.read_csv(path + "data/formant_data.csv") # Load raw data
+    data = pd.read_csv(path + "data/formant_data.csv") # Load data
+    data = data[data.sex=="m"]
     f1f3_avgs = []
     f2f3_avgs = []
+    f1_avgs = []
+    f2_avgs = []
+
     # Looping through vowel numbers and compute mean of ratio values
     # The data is stored in the fxf3_avgs lists
     for i in range(11):
@@ -56,10 +59,26 @@ class schwa:
         f2f3 = stat.mean(sub["f2/f3"].tolist())
         f1f3_avgs.append(f1f3)
         f2f3_avgs.append(f2f3)
+    
+    for i in range(11):
+        x = i + 1
+        sub = data[data.vowel == x]
+        f1 = stat.mean(sub["f1"].tolist())
+        f2 = stat.mean(sub["f2"].tolist())
+        f1_avgs.append(f1)
+        f2_avgs.append(f2)
 
     # Containers for the ratio values of user signal
     F_ratio1 = 0
     F_ratio2 = 0
+    F_ratio1_cal = 0
+    F_ratio2_cal = 0
+    F1 = 0
+    F2 = 0
+    F1_cal = 0
+    F2_cal = 0
+
+    scale = "ratio"
     
     # Value that controls wether to show error message in plot
     noisy = False
@@ -164,6 +183,9 @@ class schwa:
             F2 = F1+100
 
         # Make formant ratios and store them in the class variables.
+        schwa.F1 = F1
+        schwa.F2 = F2
+
         schwa.F_ratio1 = F1/F3
         schwa.F_ratio2 = F2/F3
 
@@ -248,10 +270,17 @@ class schwa:
             # These are the indeces for each picture
             idxs = [0,1,2,3,4,5,6,7,8,9,10]
 
+            if self.scale == "ratio":
+                x = self.f1f3_avgs
+                y = self.f2f3_avgs
+            else:
+                x = self.f1_avgs
+                y = self.f2_avgs
+
             # Make a figure
             fig, ax = plt.subplots()
             # Add the points, color them white
-            ax.scatter(self.f1f3_avgs, self.f2f3_avgs, color = "white") 
+            ax.scatter(x, y, color = "white") 
 
             # If the class variable noisy is true, just display error message
             if self.noisy:
@@ -266,7 +295,7 @@ class schwa:
             # If the class variable noisy is false, proceed with plotting  
             else:
                 # Go through each coordinate, the indices, and the picture names together
-                for idx, x0, y0, p in zip(idxs, self.f1f3_avgs, self.f2f3_avgs, paths):
+                for idx, x0, y0, p in zip(idxs, x, y, paths):
                     # If the idx is the target
                     if idx == target_idx:
                         # Create the green image on with the given coordinates
@@ -278,18 +307,45 @@ class schwa:
                     
                     # And add the picture to the plot
                     ax.add_artist(ab)
-
-                 #Target vowels from previous demo (for reference. should be removed in the final version)   
+                """
+                #Target vowels from previous demo (for reference. should be removed in the final version)   
                 target1_F1 = [0.122,0.139,0.142]
                 target1_F2 = [0.784,0.794,0.781]
                 ax.scatter(target1_F1, target1_F2, s=100, marker="o", c="blue")
                 target2_F1 = [0.196, 0.179, 0.179]
                 target2_F2 = [0.806, 0.786, 0.807]
                 ax.scatter(target2_F1, target2_F2, s=100, marker="o", c="red")
+                """
 
-                # The user formant ratios form recording, marked with an X
-                ax.scatter(self.F_ratio1, self.F_ratio2, s=50, marker = "X", c="black")
+                # TESTING STUFF
+                for v in [1,2,3,4,5,6,7,8,9,10,11]:
+                    v_data = self.data[self.data.vowel == v]
+                    if self.scale == "ratio":
+                        destr_f1f3 = v_data["f1/f3"].tolist()
+                        destr_f2f3 = v_data["f2/f3"].tolist()
+                        if v == select_vowel.vowel:
+                            ax.scatter(destr_f1f3, destr_f2f3, marker = "X")
+                        else:
+                            ax.scatter(destr_f1f3, destr_f2f3)
+                    else:    
+                        destr_f1 = v_data["f1"].tolist()
+                        destr_f2 = v_data["f2"].tolist()
+                        if v == select_vowel.vowel:
+                            ax.scatter(destr_f1, destr_f2, marker = "X")
+                        else:
+                            ax.scatter(destr_f1, destr_f2)
+                    
+
+                # The user formant ratios from recording, marked with an X
+                if self.scale == "ratio":
+                    x = self.F_ratio1 - self.F_ratio1_cal
+                    y = self.F_ratio2 - self.F_ratio2_cal
+                else:
+                    x = self.F1 - self.F1_cal
+                    y = self.F2 - self.F1_cal
+                ax.scatter(x, y, s=50, marker = "X", c="black")
             
+
             # Set axis limits
             ax.axis([0.09,0.22,0.3,0.9])
 
@@ -530,14 +586,14 @@ class rep:
 # It initiates the seequence of events and in the rigth order and the rigth timing
 def go():
 
-    rec_time = 1000*schwa.seconds # convert to miliseconds
+    rec_time = int(1000*schwa.seconds) # convert to miliseconds
 
     # Reset plot
     schwa().plot(reset=True)
 
     # Start recording
     message() # Show recording message
-    window.after(10, schwa().record) # wait 10 miliseconds and start recording
+    window.after(10, schwa().record) # Record
 
     #Recording stop (after recording time)
     window.after(rec_time, message)
@@ -548,6 +604,34 @@ def go():
     # The extra 20 miliseconds wait time is so that the computer can finish the previous job
     # Before starting the next one (which depend on the results from the previous)
     # Maybe this needs to be adjusted on slower computers?
+# END FUNCTION
+
+def cal_ratio():
+    schwa.F_ratio1_cal = schwa.F_ratio1 - schwa.f1f3_avgs[0]
+    schwa.F_ratio2_cal = schwa.F_ratio2 - schwa.f2f3_avgs[0]
+def cal_freq():
+    schwa.F1_cal = schwa.F2 - schwa.f1_avgs[0]
+    schwa.F2_cal = schwa.F2 - schwa.f2_avgs[0]
+    print(schwa.F1_cal)
+
+def calibrate():
+
+    rec_time = int(1000*schwa.seconds) # convert to miliseconds
+
+    # Reset plot
+    schwa().plot(reset=True)
+
+    # Start recording
+    message() # Show recording message
+    window.after(10, schwa().record) # Record
+
+    #Recording stop (after recording time)
+    window.after(rec_time, message)
+    window.after(rec_time+20, schwa().formants) # wait 20 miliseconds and do formant analysis
+
+    window.after(rec_time+40, cal_ratio)
+    window.after(rec_time+45, cal_freq)
+
 # END FUNCTION
 
 # Function that plays back the sound recorded from the user
@@ -564,10 +648,10 @@ def playTarget():
         wave_obj = sa.WaveObject.from_wave_file(schwa.path + "audio/target/" + vowel+"/"+target + ".wav")
         play_obj = wave_obj.play()
 
-
-
-
-
+def scale_ratio():
+    schwa.scale = "ratio"
+def scale_freq():
+    schwa.scale = "freq"
 
 
 
@@ -644,6 +728,13 @@ instr.grid(row=18, column=1, columnspan=4) # Place in grid
 # Change representation button
 Button(window, text="Change representation", width = 30, command=rep().change_rep).grid(row=19, column=1, columnspan=4)
 
+# calibrate button
+Button(window, text="Calibrate", width = 30, command=calibrate).grid(row=20, column=1, columnspan=4)
+
+#scale buttons
+Button(window, text="Ratio", width = 15, command=scale_ratio).grid(row=21, column=1, columnspan=2)
+Button(window, text="Freq", width = 15, command=scale_freq).grid(row=21, column=3, columnspan=2)
+
 # Display plot in grid
 window.plot = ImageTk.PhotoImage(Image.open(schwa.path + "img/geometric_plots/grey.png"))
 plot_show = Label(window, image=window.plot)
@@ -655,38 +746,3 @@ window.mainloop()
 
 
 
-
-"""
-ae_f1 = 342, 2189, 2792
-342/2792 = 0.122
-2189/2792 = 0.784
-
-ae_f2 = 430, 2441, 3075
-430/3075 = 0.139
-2441/3075 = 0.794
-
-ae_m1 = 373, 2047, 2622
-373/2622 = 0.142
-2047/2622 = 0.781
-
-ae_m2 = 387, 2118, 2538
-387/2538 = 0.152
-2118/2538 = 0.835
-
-
-a_f1 = 514, 2120, 2629
-514/2629= 0.196
-2120/2629 = 0.806
-
-a_f2 = 547, 2396,  3048
-547/3048 = 0.179
-2396/3048 = 0.786
-
-a_m1 = 423, 1905, 2360
-423/2360 = 0.179
-1905/2360 = 0.807
-
-a_m2 = 434, 2184, 2782
-434/2782 = 0.156
-2184/2782 = 0.785
-"""

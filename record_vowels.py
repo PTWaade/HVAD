@@ -140,18 +140,18 @@ class schwa:
             #Determine window
             F1_window = F1_list[w:w+w_size] 
             F2_window = F2_list[w:w+w_size] 
-            F3_window = F3_list[w:w+w_size]
+            #F3_window = F3_list[w:w+w_size]
 
             # Compute variance - log is used to normalize the values
             F1_var_list.append(np.log(stat.variance(F1_window)))
             F2_var_list.append(np.log(stat.variance(F2_window)))
-            F3_var_list.append(np.log(stat.variance(F3_window)))
+            #F3_var_list.append(np.log(stat.variance(F3_window)))
         
         # Loop though windows and make variance sums
         # F3 is down weighted a bit, for balance, as it is typically higher
         varSum_list = []
         for i in range(len(F1_var_list)):
-            varSum = F1_var_list[i] + F2_var_list[i] + F3_var_list[i]*0.8 
+            varSum = F1_var_list[i] + F2_var_list[i] #+ F3_var_list[i]*0.8 
             varSum_list.append(varSum)
 
         # find the minimum variance window and save its index
@@ -161,15 +161,6 @@ class schwa:
         F1 = stat.mean(F1_list[index:index+w_size])
         F2 = stat.mean(F2_list[index:index+w_size])
         F3 = stat.mean(F3_list[index:index+w_size])
-
-        # Sketchy hack to overcome issue with backvowels
-        # The problem is that when F1 and F2 get too close the analysis will interpret them as 1
-        # When vowel 9 ("o") is selected if F2 is very high, treat F3 ass F2 and F2 as F1+100
-        # NOT SURE IF IT WORKS AS INTENDET!!!
-        if (select_vowel.vowel == 9) & (F2 > 1500):
-            F3 = F2
-            F2 = F1+50
-            print("HACK YOU!!!!")
 
         # Make formant ratios and store them in the class variables.
         schwa.F1 = F1
@@ -197,7 +188,7 @@ class schwa:
         schwa.f2_avgs = []
 
         if self.sex_show == "female":
-            schwa.data = schwa.data[schwa.data.sex=="f"]
+            schwa.data = schwa.data[schwa.data.sex=="f"] # HUSK CUT med &
         if self.sex_show == "male":
             schwa.data = schwa.data[schwa.data.sex=="m"]
 
@@ -372,7 +363,7 @@ class schwa:
         if self.scale == "ratio":
             ax.axis([0.02,0.3,0,1]) 
         else:
-            ax.axis([100,800,200,3000]) 
+            ax.axis([50,800,100,3000]) 
 
         # Save the plot in the img folder as plot.png
         fig.savefig(self.path + "img/plot_rec.png")

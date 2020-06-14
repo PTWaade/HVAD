@@ -18,14 +18,17 @@ from descartes.patch import PolygonPatch
 import glob
 
 
+
 # class that altenates between displaying recording message and blank space
 # Each time it is initiated
 class message:
-    outputs = ["⦿ Recording", "                     "]
+    outputs = ["⦿ Recording", "Record vowel"]
+    color = ["#FF0000","#BBBBBB"]
     n = 0
     def __init__(self):
-        instr['text'] = self.outputs[self.n]
-
+        #instr['text'] = self.outputs[self.n]
+        record["highlightbackground"] = self.color[self.n]
+        record["text"] = self.outputs[self.n]
         if self.n == len(self.outputs)-1:
             message.n = 0
         else:
@@ -174,9 +177,6 @@ class schwa:
         schwa.F_ratio1 = F1/F3
         schwa.F_ratio2 = F2/F3
 
-        print(F1_var_list[index]*1000000)
-        print(F2_var_list[index]*1000000)
-
 
         # If the variance is two high the signal is two noisy
         # VARIANCE THRESHOLDS ARE SET SEMI RANDOMLY - NEEDS MORE TESTING
@@ -184,6 +184,8 @@ class schwa:
             schwa.noisy = True
         else:
             schwa.noisy = False
+
+        user_vowel["text"] = "Play your own vowel"
     # END FUNCTION
 
     # Update function for updating the data before plotting
@@ -287,74 +289,42 @@ class schwa:
 
             # If the class variable noisy is true, just display error message
             if self.noisy:
-                schwa.F1 == 0
-                ax.text(1800, 730, "Attention: Analysis unreliable", size=10, rotation=0,
+                ax.text(1200, 125, "Attention: Analysis unreliable", size=10, rotation=0,
                     ha="center", va="center",
                     bbox=dict(boxstyle="round",
                         ec=(1., 0.5, 0.5),
                         fc=(1., 0.8, 0.8),
                         )
                 )
-
+            
             # If the class variable noisy is false, proceed with plotting  
-            else:
-                # Go through each coordinate, the indices, and the picture names together
-                for idx, x0, y0, p in zip(idxs, x, y, paths):
-                    # If the idx is the target
-                    if idx == target_idx:
-                        
-                        # Create the green image on with the given coordinates
-                        ab = AnnotationBbox(self.getImage(self.path + prefix_green + p, zoom), (x0, y0), frameon=False)
-                    # Otherwise
-                    else:
-                        # Make it grey
-                        ab = AnnotationBbox(self.getImage(self.path + prefix_grey + p, zoom), (x0, y0), frameon=False)
-                    
-                    # And add the picture to the plot
-                    ax.add_artist(ab)
-
-                colors = ["#FF5733", "#2E7D32", "#FB8C00", "#1565C0", "#EED918", "#F571C4", "#9575CD", "#1565C0", "#2E7D32", "#AF601A", "#6D4C41"]
         
-                if select_vowel.vowel == 0:
-                    #for v in [1,2,3,4,5,6,7,8,9,10,11]:
-                    for v in [1,2,3,4,5,6,7,10]:
-                        v_data = schwa.data[schwa.data.vowel == v]
-                        if self.scale == "ratio":
-                            destr_f1f3 = v_data["f1/f3"].tolist()
-                            destr_f2f3 = v_data["f2/f3"].tolist()
-                            #ax.scatter(destr_f1f3, destr_f2f3, color = colors[v-1])
-                            
-                            if len(destr_f1f3)>2:
-                                xy_list = []
-                                for i in range(len(destr_f1f3)):
-                                    xy = (destr_f1f3[i], destr_f2f3[i])
-                                    xy_list.append(xy)
-                                points = MultiPoint(xy_list)
-                                hull = points.convex_hull
-                                patch = PolygonPatch(hull, alpha=0.3, zorder=2, edgecolor=colors[v-1], facecolor=colors[v-1])
-                                ax.add_patch(patch)
-                        else:    
-                            destr_f1 = v_data["f1"].tolist()
-                            destr_f2 = v_data["f2"].tolist()
-                            #ax.scatter(destr_f2, destr_f1, color = colors[v-1])
-                            
-                            if len(destr_f1)>2:
-                                xy_list = []
-                                for i in range(len(destr_f1)):
-                                    xy = (destr_f2[i], destr_f1[i])
-                                    xy_list.append(xy)
-
-                                points = MultiPoint(xy_list)
-                                hull = points.convex_hull
-                                patch = PolygonPatch(hull, alpha=0.3, zorder=2, edgecolor=colors[v-1], facecolor=colors[v-1])
-                                ax.add_patch(patch)
+            # Go through each coordinate, the indices, and the picture names together
+            for idx, x0, y0, p in zip(idxs, x, y, paths):
+                # If the idx is the target
+                if idx == target_idx:
+                    
+                    # Create the green image on with the given coordinates
+                    ab = AnnotationBbox(self.getImage(self.path + prefix_green + p, zoom), (x0, y0), frameon=False)
+                # Otherwise
                 else:
-                    v = select_vowel.vowel
-                    v_data = self.data[self.data.vowel == v]
+                    # Make it grey
+                    ab = AnnotationBbox(self.getImage(self.path + prefix_grey + p, zoom), (x0, y0), frameon=False)
+                
+                # And add the picture to the plot
+                ax.add_artist(ab)
+
+            colors = ["#FF5733", "#2E7D32", "#FB8C00", "#1565C0", "#EED918", "#F571C4", "#9575CD", "#1565C0", "#2E7D32", "#AF601A", "#6D4C41"]
+    
+            if select_vowel.vowel == 0:
+                #for v in [1,2,3,4,5,6,7,8,9,10,11]:
+                for v in [1,2,3,4,5,6,7,10]:
+                    v_data = schwa.data[schwa.data.vowel == v]
                     if self.scale == "ratio":
                         destr_f1f3 = v_data["f1/f3"].tolist()
                         destr_f2f3 = v_data["f2/f3"].tolist()
-                        #ax.scatter(destr_f2f3, destr_f1f3)
+                        #ax.scatter(destr_f1f3, destr_f2f3, color = colors[v-1])
+                        
                         if len(destr_f1f3)>2:
                             xy_list = []
                             for i in range(len(destr_f1f3)):
@@ -362,12 +332,13 @@ class schwa:
                                 xy_list.append(xy)
                             points = MultiPoint(xy_list)
                             hull = points.convex_hull
-                            patch = PolygonPatch(hull, alpha=0.3, zorder=2, edgecolor=colors[v-1], facecolor=colors[v-1])
+                            patch = PolygonPatch(hull, alpha=0.4, zorder=2, edgecolor=colors[v-1], facecolor=colors[v-1])
                             ax.add_patch(patch)
                     else:    
                         destr_f1 = v_data["f1"].tolist()
                         destr_f2 = v_data["f2"].tolist()
-                        #ax.scatter(destr_f2, destr_f1)
+                        #ax.scatter(destr_f2, destr_f1, color = colors[v-1])
+                        
                         if len(destr_f1)>2:
                             xy_list = []
                             for i in range(len(destr_f1)):
@@ -376,20 +347,73 @@ class schwa:
 
                             points = MultiPoint(xy_list)
                             hull = points.convex_hull
-                            patch = PolygonPatch(hull, alpha=0.3, zorder=2, edgecolor=colors[v-1], facecolor=colors[v-1])
+                            patch = PolygonPatch(hull, alpha=0.4, zorder=2, edgecolor=colors[v-1], facecolor=colors[v-1])
                             ax.add_patch(patch)
-                    
+            else:
+                v = select_vowel.vowel
+                v_data = self.data[self.data.vowel == v]
+                if self.scale == "ratio":
+                    destr_f1f3 = v_data["f1/f3"].tolist()
+                    destr_f2f3 = v_data["f2/f3"].tolist()
+                    #ax.scatter(destr_f2f3, destr_f1f3)
+                    if len(destr_f1f3)>2:
+                        xy_list = []
+                        for i in range(len(destr_f1f3)):
+                            xy = (destr_f1f3[i], destr_f2f3[i])
+                            xy_list.append(xy)
+                        points = MultiPoint(xy_list)
+                        hull = points.convex_hull
+                        patch = PolygonPatch(hull, alpha=0.4, zorder=2, edgecolor=colors[v-1], facecolor=colors[v-1])
+                        ax.add_patch(patch)
+                else:    
+                    destr_f1 = v_data["f1"].tolist()
+                    destr_f2 = v_data["f2"].tolist()
+                    #ax.scatter(destr_f2, destr_f1)
+                    if len(destr_f1)>2:
+                        xy_list = []
+                        for i in range(len(destr_f1)):
+                            xy = (destr_f2[i], destr_f1[i])
+                            xy_list.append(xy)
 
-                # The user formant ratios from recording, marked with an X
-                if self.F1 != 0:
-                    if self.scale == "ratio":
-                        y = self.F_ratio1
-                        x = self.F_ratio2
-                    else:
-                        y = self.F1
-                        x = self.F2
-                    ax.scatter(x, y, s=50, marker = "X", c="black")
-            
+                        points = MultiPoint(xy_list)
+                        hull = points.convex_hull
+                        patch = PolygonPatch(hull, alpha=0.4, zorder=2, edgecolor=colors[v-1], facecolor=colors[v-1])
+                        ax.add_patch(patch)
+                
+            if select_vowel.vowel != 0:
+                example_list = [
+                    r"$\bf{Mit}$" + "\n (English: My / mine)", 
+                    r"$\bf{Midt}$" + "\n (English: Center / middle)", 
+                    r"$\bf{Mæt}$" + "\n(English: Satiated / full)", 
+                    r"$\bf{Mat}$" + "\n (English: Matt / faint",
+                    r"$\bf{Tysk}$" + "\n (English: German)",
+                    r"$\bf{Øst}$" + "\n (English: East)",
+                    r"$\bf{Skøn}$" + "\n (English: Graceful / estimate",
+                    r"$\bf{Kusk}$" + "\n (English: Coachman)",
+                    r"$\bf{Foto}$" + "\n (English: Photo)",
+                    r"$\bf{Bund}$" + "\n (English: Buttom)",
+                    "Last vowel in: " + r"$\bf{Kaste}$" + "\n (English: Throw)"
+                    ]
+                ax.text(2890, 110, f"Example word: {example_list[select_vowel.vowel-1]}", size=10, rotation=0,
+                    ha="left", va="center",
+                    bbox=dict(boxstyle="round",
+                        ec=colors[select_vowel.vowel-1],
+                        fc="white",
+                        alpha=0.4
+                        )
+                )
+
+
+            # The user formant ratios from recording, marked with an X
+            if self.F1 != 0:
+                if self.scale == "ratio":
+                    y = self.F_ratio1
+                    x = self.F_ratio2
+                else:
+                    y = self.F1
+                    x = self.F2
+                ax.scatter(x, y, s=50, marker = "X", c="black")
+        
 
             # Set axis limits
             # Set axis limits
@@ -429,6 +453,7 @@ class select_vowel:
     # Container for rep folder path
     folder = ""
 
+    colors = ["#FF5733", "#2E7D32", "#FB8C00", "#1565C0", "#EED918", "#F571C4", "#9575CD", "#1565C0", "#2E7D32", "#AF601A", "#6D4C41"]
     # Function that resets all buttons to grey (used when selecting new vowel, before making that green)
     def reset_buttons(self):
         # set the rigth folder path
@@ -462,6 +487,8 @@ class select_vowel:
         v_button9.configure(image=window.v9)
         v_button10.configure(image=window.v10)
         v_button11.configure(image=window.v11)
+
+        
     # END FUNCTION
 
     # The 11 functions each dedicated to a vowel button
@@ -473,71 +500,95 @@ class select_vowel:
         window.v1 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/1.png"))
         v_button1.configure(image=window.v1)
         schwa().plot()
+        target["highlightbackground"] = self.colors[0]
+        target["text"] = "Play target vowel"
     def v2(self):
         self.reset_buttons()
         select_vowel.vowel = 2
         window.v2 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/2.png"))
         v_button2.configure(image=window.v2)
         schwa().plot()
+        target["highlightbackground"] = self.colors[1]
+        target["text"] = "Play target vowel"
     def v3(self):
         self.reset_buttons()
         select_vowel.vowel = 3
         window.v3 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/3.png"))
         v_button3.configure(image=window.v3)
         schwa().plot()
+        target["highlightbackground"] = self.colors[2]
+        target["text"] = "Play target vowel"
     def v4(self):
         self.reset_buttons()
         select_vowel.vowel = 4
         window.v4 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/4.png"))
         v_button4.configure(image=window.v4)
         schwa().plot()
+        target["highlightbackground"] = self.colors[3]
+        target["text"] = "Play target vowel"
     def v5(self):
         self.reset_buttons()
         select_vowel.vowel = 5
         window.v5 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/5.png"))
         v_button5.configure(image=window.v5)
         schwa().plot()
+        target["highlightbackground"] = self.colors[4]
+        target["text"] = "Play target vowel"
     def v6(self):
         self.reset_buttons()
         select_vowel.vowel = 6
         window.v6 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/6.png"))
         v_button6.configure(image=window.v6)
         schwa().plot()
+        target["highlightbackground"] = self.colors[5]
+        target["text"] = "Play target vowel"
     def v7(self):
         self.reset_buttons()
         select_vowel.vowel = 7
         window.v7 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/7.png"))
         v_button7.configure(image=window.v7)
         schwa().plot()
+        target["highlightbackground"] = self.colors[6]
+        target["text"] = "Play target vowel"
     def v8(self):
         self.reset_buttons()
         select_vowel.vowel = 8
         window.v8 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/8.png"))
         v_button8.configure(image=window.v8)
         schwa().plot()
+        target["highlightbackground"] = self.colors[7]
+        target["text"] = "Play target vowel"
     def v9(self):
         self.reset_buttons()
         select_vowel.vowel = 9
         window.v9 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/9.png"))
         v_button9.configure(image=window.v9)
         schwa().plot()
+        target["highlightbackground"] = self.colors[8]
+        target["text"] = "Play target vowel"
     def v10(self):
         self.reset_buttons()
         select_vowel.vowel = 10
         window.v10 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/10.png"))
         v_button10.configure(image=window.v10)
         schwa().plot()
+        target["highlightbackground"] = self.colors[9]
+        target["text"] = "Play target vowel"
     def v11(self):
         self.reset_buttons()
         select_vowel.vowel = 11
         window.v11 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/11.png"))
         v_button11.configure(image=window.v11)
         schwa().plot()
+        target["highlightbackground"] = self.colors[10]
+        target["text"] = "Play target vowel"
     
     def reset_vowel(self):
         select_vowel.vowel = 0
         self.reset_buttons()
         schwa().plot()
+        target["highlightbackground"] = "#FFFFFF"
+        target["text"] = "No target selected"
     # END OF THE 11 FUNCTION
 # END CLASS
 
@@ -554,14 +605,18 @@ class rep:
         # Change the r value to the other rep
         if self.r == "GEO":
             rep.r = "IPA"
+            rep_status["text"] = "Vowel representation:\nIPA symbols"
         else: 
             rep.r = "GEO"
+            rep_status["text"] = "Vowel representation:\nGeometric symbols"
 
         # Set the path prefix according to the rep
         if self.r == "GEO":
             folder = "img/geometric_"
         else:
             folder = "img/IPA_"
+
+        
 
         # Make all buttons grey
         window.v1 = ImageTk.PhotoImage(Image.open(schwa.path + folder + "grey/1.png"))
@@ -612,6 +667,7 @@ class rep:
         v_button9.configure(image=window.v9)
         v_button10.configure(image=window.v10)
         v_button11.configure(image=window.v11)
+
 
         # Update the plot in the interface
         schwa().plot()
@@ -666,18 +722,20 @@ def scale_freq():
 
 def sex_change_f():
     schwa.sex_show = "female"
-    instr["text"] = "  Sex set to female  "
+    sex_status["text"] = "Selected sex: Female"
     schwa().plot()
 def sex_change_m():
     schwa.sex_show = "male"
-    instr["text"] = "   Sex set to male  "
+    sex_status["text"] = "Selected sex: Male    "
     schwa().plot()
 def sex_change_all():
     schwa.sex_show = "all"
-    instr["text"] = "   Sex set to all  "
+    sex_status["text"] = "Selected sex: Both    "
     schwa().plot()
 
-
+def help():
+    popup_window = Toplevel()
+    Label(popup_window, text = "Hej med dig jaja...\nHej med dig jaja...\nHej med dig jaja...\nHej med dig jaja...\nHihi").pack()
 ######################################################################################
 ###_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_##
 ###_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_!InterFACE!_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_##
@@ -686,18 +744,80 @@ def sex_change_all():
 
 # Initiate interface window
 window = Tk()
+window.configure(background='white')
 
 # The title of the window
 window.title("HVAD - Help with Vowel Acquisition for Danish")
 
+Label(window, text = " ", width=2).grid(row=0, column=0)
+
+### LEFT PART
+
 # Get logo and display in grid
 window.logo = ImageTk.PhotoImage(Image.open(schwa.path + "img/HVADlogo.png"))
 logo = Label(window, image=window.logo)
-logo.grid(row=0,column=0, columnspan=2)
+logo.grid(row=0,column=1, columnspan=3, rowspan= 3, sticky = N)
 
+# Settings
+setStyle= tkFont.Font(family="Lucida Grande", size=20)
+Label(window, text = "Settings", font=setStyle).grid(row=3, column=1, columnspan=3, sticky=SW)
+
+# Sex status
+sexStyle = tkFont.Font(family="Lucida Grande", size=15) # Styling of the text
+sex_status = Label(window, text = "Selected sex: Both", font=sexStyle) # Just empty space at the start
+sex_status.grid(row=4, column=1, columnspan=3, sticky=SW) # Place in grid
+
+# Sex change buttons
+Button(window, text="Female", width = 8, command=sex_change_f).grid(row=5, column=1, columnspan=1, sticky=NW)
+Button(window, text="Male", width = 8, command=sex_change_m).grid(row=5, column=2, columnspan=1, sticky=NW)
+Button(window, text="Both", width = 8, command=sex_change_all).grid(row=5, column=3, columnspan=1, sticky=NW)
+
+# Rep status
+repStyle = tkFont.Font(family="Lucida Grande", size=15) # Styling of the text
+rep_status = Label(window, text = "Vowel representation:\nGeometric symbols", font=repStyle, justify="left") # Just empty space at the start
+rep_status.grid(row=6, column=1, columnspan=3, sticky=SW) # Place in grid
+
+# Change representation button
+Button(window, text="Change representation", width = 20, command=rep().change_rep).grid(row=7, column=1, columnspan=3, sticky=NW)
+
+
+# Help Button
+helpStyle = tkFont.Font(family="Lucida Grande", size=15)
+Button(window, text = "Help", command=help, font=helpStyle, height = 2, width= 8).grid(row=8,column=1, columnspan=3)
+
+
+
+
+### MIDDLE PART
+
+# Display plot in grid
+window.plot = ImageTk.PhotoImage(Image.open(schwa.path + "img/geometric_plots/grey.png"))
+plot_show = Label(window, image=window.plot)
+plot_show.grid(row=0, column=4, rowspan=20)
+
+
+soundStyle = tkFont.Font(family="Lucida Grande", size=15)
 # The playback buttons
-Button(window, text="Play your last recorded vowel", width = 30, command=playSound).grid(row=10, column=1, columnspan=4)
-Button(window, text="Play target vowel", width = 30, command=playTarget).grid(row=11, column=1, columnspan=4)
+user_vowel = Button(window, text="No vowel recorded",font=soundStyle, width = 21, height=2, command=playSound)
+user_vowel.grid(row=15, column=4)
+target = Button(window, text="No target selected",font=soundStyle, width = 21, height=2, command=playTarget, highlightbackground="#FFFFFF")
+target.grid(row=15, column=4, sticky=E)
+# Go button
+record = Button(window, text="Record vowel", font=soundStyle, width = 21, height=2, command=go, highlightbackground="#BBBBBB")
+record.grid(row=15, column=4, sticky=W)
+
+# Recording message
+fontStyle = tkFont.Font(family="Lucida Grande", size=30) # Styling of the text
+instr = Label(window, text = " ", font=fontStyle, fg="#ff0000") # Just empty space at the start
+instr.grid(row=17, column=2, columnspan=4) # Place in grid
+
+
+
+
+
+### RIGHT PART
+targetStyle= tkFont.Font(family="Lucida Grande", size=30)
+Label(window, text = "Targets", height = 2, font=targetStyle).grid(row=0, column=5, columnspan=2, sticky=S)
 
 # The images of the vowel buttons
 window.v1 = ImageTk.PhotoImage(Image.open(schwa.path + "img/geometric_grey/1.png"))
@@ -726,46 +846,35 @@ v_button10 = Button(window, command=select_vowel().v10, image=window.v10)
 v_button11 = Button(window, command=select_vowel().v11, image=window.v11)
 
 # Place the vowel buttons in grid
-v_button1.grid(row=12, column=1)
-v_button2.grid(row=13, column=1)
-v_button3.grid(row=14, column=1)
-v_button4.grid(row=15, column=1)
-v_button5.grid(row=12, column=2)
-v_button6.grid(row=13, column=2)
-v_button7.grid(row=14, column=2)
+v_button1.grid(row=1, column=5, rowspan = 2)
+v_button2.grid(row=3, column=5, rowspan = 2)
+v_button3.grid(row=5, column=5, rowspan = 2)
+v_button4.grid(row=7, column=5, rowspan = 2)
+v_button5.grid(row=1, column=6, rowspan = 2)
+v_button6.grid(row=3, column=6, rowspan = 2)
+v_button7.grid(row=5, column=6, rowspan = 2)
 #v_button8.grid(row=13, column=3)
 #v_button9.grid(row=14, column=3)
-v_button10.grid(row=15, column=2)
+v_button10.grid(row=7, column=6, rowspan = 2)
 #v_button11.grid(row=13, column=4)
 
-# Go button
-goStyle = tkFont.Font(family="Lucida Grande", size=15) # Styling of the text
-Button(window, text="Go!", font=goStyle, width = 15, height=2, command=go).grid(row=16, column=1, columnspan=4)
+#reset
+Button(window, text="See all vowels", width = 15, height=2, command=select_vowel().reset_vowel).grid(row=9, column=5, columnspan=2)
 
-# Recording message
-fontStyle = tkFont.Font(family="Lucida Grande", size=30) # Styling of the text
-instr = Label(window, text = " ", font=fontStyle, fg="#ff0000") # Just empty space at the start
-instr.grid(row=18, column=1, columnspan=4) # Place in grid
 
-# Change representation button
-Button(window, text="Change representation", width = 30, command=rep().change_rep).grid(row=19, column=1, columnspan=4)
+Label(window, text = " ", width = 2).grid(row=0, column=7)
+
+
+
 
 #scale buttons
 #Button(window, text="Ratio", width = 15, command=scale_ratio).grid(row=21, column=1, columnspan=2)
 #Button(window, text="Freq", width = 15, command=scale_freq).grid(row=21, column=3, columnspan=2)
 
-# Sex change buttons
-Button(window, text="Female", width = 8, command=sex_change_f).grid(row=22, column=1, columnspan=1)
-Button(window, text="Male", width = 8, command=sex_change_m).grid(row=22, column=2, columnspan=1)
-Button(window, text="All", width = 8, command=sex_change_all).grid(row=22, column=3, columnspan=1)
 
-#reset
-Button(window, text="Reset", width = 8, command=select_vowel().reset_vowel).grid(row=22, column=4, columnspan=1)
 
-# Display plot in grid
-window.plot = ImageTk.PhotoImage(Image.open(schwa.path + "img/geometric_plots/grey.png"))
-plot_show = Label(window, image=window.plot)
-plot_show.grid(row=1, column=0, rowspan=40)
+
+
 
 
 

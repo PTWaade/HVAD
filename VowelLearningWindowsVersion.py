@@ -826,15 +826,13 @@ plot_show.grid(row=0, column=4, rowspan=20)
 
 soundStyle = tkFont.Font(family="Lucida Grande", size=15)
 # The playback buttons
-user_vowel = Button(window, text="No vowel recorded",font=soundStyle, width = 18, height=2, command=playSound)
+user_vowel = Button(window, text="No vowel recorded",font=soundStyle, width = 18, height=1, command=playSound)
 user_vowel.grid(row=15, column=4)
-#target = Button(window, text="No target selected",font=soundStyle, width = 21, height=2, command=playTarget, highlightbackground="#FFFFFF") #mac
-target = Button(window, text="No target selected",font=soundStyle, width = 18, height=2, command=playTarget, bg="#FFFFFF") #windows
+target = Button(window, text="No target selected",font=soundStyle, width = 18, height=1, command=playTarget, bg="#FFFFFF") #windows
 
 target.grid(row=15, column=4, sticky=E)
 # Go button
-#record = Button(window, text="Record vowel", font=soundStyle, width = 21, height=2, command=go, highlightbackground="#BBBBBB") #mac
-record = Button(window, text="Record vowel", font=soundStyle, width = 18, height=2, command=go, bg="#BBBBBB") #windows
+record = Button(window, text="Record vowel", font=soundStyle, width = 18, height=1, command=go, bg="#BBBBBB") #windows
 record.grid(row=15, column=4, sticky=W)
 
 # Recording message

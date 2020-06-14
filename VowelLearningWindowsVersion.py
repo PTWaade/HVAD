@@ -51,7 +51,7 @@ class schwa:
 
     seconds = 1 # number of seconds to record
 
-    device_index = 3 # CLO = 3; MMI = 0 (cmp mic), 1 (CLO mic)
+    device_index = 0 # CLO = 3; MMI = 0 (cmp mic), 1 (CLO mic)
 
     # Formant data for plotting icons in foprmant space 
     data = pd.read_csv(path + "data/formant_data.csv") # Load data
@@ -540,7 +540,8 @@ class select_vowel:
         window.v5 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/5.png"))
         v_button5.configure(image=window.v5)
         schwa().plot()
-        target["highlightbackground"] = self.colors[4]
+        #target["highlightbackground"] = self.colors[4] #mac
+        target["bg"] = self.colors[4]# windows
         target["text"] = "Play target vowel"
     def v6(self):
         self.reset_buttons()
@@ -548,7 +549,8 @@ class select_vowel:
         window.v6 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/6.png"))
         v_button6.configure(image=window.v6)
         schwa().plot()
-        target["highlightbackground"] = self.colors[5]
+        #target["highlightbackground"] = self.colors[5] #mac
+        target["bg"] = self.colors[5] #windows
         target["text"] = "Play target vowel"
     def v7(self):
         self.reset_buttons()
@@ -747,19 +749,9 @@ def sex_change_all():
     sex_status["text"] = "Selected sex: Both    "
     schwa().plot()
 
-class instructions:
-    n = 0
-    def __init__(self):
-        if self.n == 0:
-            window.plot = ImageTk.PhotoImage(Image.open(schwa.path + "img/test.png"))
-            plot_show.configure(image=window.plot)
-            instructions.n = 1
-        else:
-            window.plot = ImageTk.PhotoImage(Image.open(schwa.path + "img/plot.png"))
-            plot_show.configure(image=window.plot)
-            instructions.n = 0
-
-
+def help():
+    popup_window = Toplevel()
+    Label(popup_window, text = "Hej med dig jaja...\nHej med dig jaja...\nHej med dig jaja...\nHej med dig jaja...\nHihi").pack()
 ######################################################################################
 ###_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_##
 ###_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_!InterFACE!_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_##
@@ -773,22 +765,22 @@ window.configure(background='white')
 # The title of the window
 window.title("HVAD - Help with Vowel Acquisition for Danish")
 
-Label(window, text = " ", width=2).grid(row=0, column=0)
+Label(window, text = " ", width=18, bg = "white").grid(row=0, column=0)
 
 ### LEFT PART
 
 # Get logo and display in grid
 window.logo = ImageTk.PhotoImage(Image.open(schwa.path + "img/HVADlogo.png"))
-logo = Label(window, image=window.logo)
+logo = Label(window, image=window.logo, bg = "white")
 logo.grid(row=0,column=1, columnspan=3, rowspan= 3, sticky = N)
 
 # Settings
 setStyle= tkFont.Font(family="Lucida Grande", size=20)
-Label(window, text = "Settings", font=setStyle).grid(row=3, column=1, columnspan=3, sticky=SW)
+Label(window, text = "Settings", bg = "white", font=setStyle).grid(row=3, column=1, columnspan=3, sticky=SW)
 
 # Sex status
 sexStyle = tkFont.Font(family="Lucida Grande", size=15) # Styling of the text
-sex_status = Label(window, text = "Selected sex: Both", font=sexStyle) # Just empty space at the start
+sex_status = Label(window, text = "Selected sex: Both", font=sexStyle, bg = "white") # Just empty space at the start
 sex_status.grid(row=4, column=1, columnspan=3, sticky=SW) # Place in grid
 
 # Sex change buttons
@@ -798,7 +790,7 @@ Button(window, text="Both", width = 8, command=sex_change_all).grid(row=5, colum
 
 # Rep status
 repStyle = tkFont.Font(family="Lucida Grande", size=15) # Styling of the text
-rep_status = Label(window, text = "Vowel representation:\nGeometric symbols", font=repStyle, justify="left") # Just empty space at the start
+rep_status = Label(window, text = "Vowel representation:\nGeometric symbols", font=repStyle, justify="left", bg = "white") # Just empty space at the start
 rep_status.grid(row=6, column=1, columnspan=3, sticky=SW) # Place in grid
 
 # Change representation button
@@ -807,7 +799,7 @@ Button(window, text="Change representation", width = 20, command=rep().change_re
 
 # Help Button
 helpStyle = tkFont.Font(family="Lucida Grande", size=15)
-Button(window, text = "Instructions", command=instructions, font=helpStyle, height = 2, width= 10).grid(row=8,column=1, columnspan=3, sticky=S)
+Button(window, text = "Help", command=help, font=helpStyle, height = 2, width= 8).grid(row=8,column=1, columnspan=3)
 
 
 
@@ -816,27 +808,26 @@ Button(window, text = "Instructions", command=instructions, font=helpStyle, heig
 
 # Display plot in grid
 window.plot = ImageTk.PhotoImage(Image.open(schwa.path + "img/geometric_plots/grey.png"))
-plot_show = Label(window, image=window.plot)
+plot_show = Label(window, image=window.plot, bg = "white")
 plot_show.grid(row=0, column=4, rowspan=20)
-
 
 
 soundStyle = tkFont.Font(family="Lucida Grande", size=15)
 # The playback buttons
-user_vowel = Button(window, text="No vowel recorded",font=soundStyle, width = 21, height=2, command=playSound)
+user_vowel = Button(window, text="No vowel recorded",font=soundStyle, width = 18, height=2, command=playSound)
 user_vowel.grid(row=15, column=4)
 #target = Button(window, text="No target selected",font=soundStyle, width = 21, height=2, command=playTarget, highlightbackground="#FFFFFF") #mac
-target = Button(window, text="No target selected",font=soundStyle, width = 21, height=2, command=playTarget, bg="#FFFFFF") #windows
+target = Button(window, text="No target selected",font=soundStyle, width = 18, height=2, command=playTarget, bg="#FFFFFF") #windows
 
 target.grid(row=15, column=4, sticky=E)
 # Go button
 #record = Button(window, text="Record vowel", font=soundStyle, width = 21, height=2, command=go, highlightbackground="#BBBBBB") #mac
-record = Button(window, text="Record vowel", font=soundStyle, width = 21, height=2, command=go, bg="#BBBBBB") #windows
+record = Button(window, text="Record vowel", font=soundStyle, width = 18, height=2, command=go, bg="#BBBBBB") #windows
 record.grid(row=15, column=4, sticky=W)
 
 # Recording message
 fontStyle = tkFont.Font(family="Lucida Grande", size=30) # Styling of the text
-instr = Label(window, text = " ", font=fontStyle, fg="#ff0000") # Just empty space at the start
+instr = Label(window, text = " ", font=fontStyle, fg="#ff0000", bg = "white") # Just empty space at the start
 instr.grid(row=17, column=2, columnspan=4) # Place in grid
 
 
@@ -845,7 +836,7 @@ instr.grid(row=17, column=2, columnspan=4) # Place in grid
 
 ### RIGHT PART
 targetStyle= tkFont.Font(family="Lucida Grande", size=30)
-Label(window, text = "Targets", height = 2, font=targetStyle).grid(row=0, column=5, columnspan=2, sticky=S)
+Label(window, text = "Targets", height = 2, font=targetStyle, bg = "white").grid(row=0, column=5, columnspan=2, sticky=S)
 
 # The images of the vowel buttons
 window.v1 = ImageTk.PhotoImage(Image.open(schwa.path + "img/geometric_grey/1.png"))
@@ -890,7 +881,7 @@ v_button10.grid(row=7, column=6, rowspan = 2)
 Button(window, text="See all vowels", width = 15, height=2, command=select_vowel().reset_vowel).grid(row=9, column=5, columnspan=2)
 
 
-Label(window, text = " ", width = 2).grid(row=0, column=7)
+Label(window, text = " ", width = 30, bg = "white").grid(row=0, column=7)
 
 
 

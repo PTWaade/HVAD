@@ -46,7 +46,7 @@ class schwa:
 
     seconds = 1 # number of seconds to record
 
-    device_index = 3 # CLO = 3, MMI = ?
+    device_index = 0 # CLO = 3, MMI = ?
 
     # Formant data for plotting icons in foprmant space 
     data = pd.read_csv(path + "data/formant_data.csv") # Load data

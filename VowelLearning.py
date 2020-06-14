@@ -27,7 +27,9 @@ class message:
     n = 0
     def __init__(self):
         #instr['text'] = self.outputs[self.n]
-        record["highlightbackground"] = self.color[self.n]
+        #record["highlightbackground"] = self.color[self.n] #mac
+        record["bg"] = self.color[self.n] #windows
+
         record["text"] = self.outputs[self.n]
         if self.n == len(self.outputs)-1:
             message.n = 0
@@ -49,7 +51,7 @@ class schwa:
 
     seconds = 1 # number of seconds to record
 
-    device_index = 3 # CLO = 3, MMI = ?
+    device_index = 3 # CLO = 3; MMI = 0 (cmp mic), 1 (CLO mic)
 
     # Formant data for plotting icons in foprmant space 
     data = pd.read_csv(path + "data/formant_data.csv") # Load data
@@ -500,7 +502,9 @@ class select_vowel:
         window.v1 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/1.png"))
         v_button1.configure(image=window.v1)
         schwa().plot()
-        target["highlightbackground"] = self.colors[0]
+        #target["highlightbackground"] = self.colors[0] #mac
+        target["bg"] = self.colors[0] #windows
+
         target["text"] = "Play target vowel"
     def v2(self):
         self.reset_buttons()
@@ -508,7 +512,9 @@ class select_vowel:
         window.v2 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/2.png"))
         v_button2.configure(image=window.v2)
         schwa().plot()
-        target["highlightbackground"] = self.colors[1]
+        #target["highlightbackground"] = self.colors[1] # mac
+        target["bg"] = self.colors[1] # windows
+
         target["text"] = "Play target vowel"
     def v3(self):
         self.reset_buttons()
@@ -516,7 +522,8 @@ class select_vowel:
         window.v3 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/3.png"))
         v_button3.configure(image=window.v3)
         schwa().plot()
-        target["highlightbackground"] = self.colors[2]
+        #target["highlightbackground"] = self.colors[2] #mac
+        target["bg"] = self.colors[2] #windows
         target["text"] = "Play target vowel"
     def v4(self):
         self.reset_buttons()
@@ -524,7 +531,8 @@ class select_vowel:
         window.v4 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/4.png"))
         v_button4.configure(image=window.v4)
         schwa().plot()
-        target["highlightbackground"] = self.colors[3]
+        #target["highlightbackground"] = self.colors[3] #mac
+        target["bg"] = self.colors[3] #windows
         target["text"] = "Play target vowel"
     def v5(self):
         self.reset_buttons()
@@ -548,7 +556,8 @@ class select_vowel:
         window.v7 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/7.png"))
         v_button7.configure(image=window.v7)
         schwa().plot()
-        target["highlightbackground"] = self.colors[6]
+        #target["highlightbackground"] = self.colors[6] #mac
+        target["bg"] = self.colors[6] #windows
         target["text"] = "Play target vowel"
     def v8(self):
         self.reset_buttons()
@@ -556,7 +565,8 @@ class select_vowel:
         window.v8 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/8.png"))
         v_button8.configure(image=window.v8)
         schwa().plot()
-        target["highlightbackground"] = self.colors[7]
+        #target["highlightbackground"] = self.colors[7] #mac
+        target["bg"] = self.colors[7] #windows
         target["text"] = "Play target vowel"
     def v9(self):
         self.reset_buttons()
@@ -564,7 +574,8 @@ class select_vowel:
         window.v9 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/9.png"))
         v_button9.configure(image=window.v9)
         schwa().plot()
-        target["highlightbackground"] = self.colors[8]
+        #target["highlightbackground"] = self.colors[8] #mac
+        target["bg"] = self.colors[8] #windows
         target["text"] = "Play target vowel"
     def v10(self):
         self.reset_buttons()
@@ -572,7 +583,8 @@ class select_vowel:
         window.v10 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/10.png"))
         v_button10.configure(image=window.v10)
         schwa().plot()
-        target["highlightbackground"] = self.colors[9]
+        #target["highlightbackground"] = self.colors[9] #mac
+        target["bg"] = self.colors[9] #windows
         target["text"] = "Play target vowel"
     def v11(self):
         self.reset_buttons()
@@ -580,14 +592,16 @@ class select_vowel:
         window.v11 = ImageTk.PhotoImage(Image.open(schwa.path + self.folder + "green/11.png"))
         v_button11.configure(image=window.v11)
         schwa().plot()
-        target["highlightbackground"] = self.colors[10]
+        #target["highlightbackground"] = self.colors[10] #mac
+        target["bg"] = self.colors[10] #windows
         target["text"] = "Play target vowel"
     
     def reset_vowel(self):
         select_vowel.vowel = 0
         self.reset_buttons()
         schwa().plot()
-        target["highlightbackground"] = "#FFFFFF"
+        #target["highlightbackground"] = "#FFFFFF" #mac
+        target["bg"] = "#FFFFFF" #windows
         target["text"] = "No target selected"
     # END OF THE 11 FUNCTION
 # END CLASS
@@ -800,10 +814,13 @@ soundStyle = tkFont.Font(family="Lucida Grande", size=15)
 # The playback buttons
 user_vowel = Button(window, text="No vowel recorded",font=soundStyle, width = 21, height=2, command=playSound)
 user_vowel.grid(row=15, column=4)
-target = Button(window, text="No target selected",font=soundStyle, width = 21, height=2, command=playTarget, highlightbackground="#FFFFFF")
+#target = Button(window, text="No target selected",font=soundStyle, width = 21, height=2, command=playTarget, highlightbackground="#FFFFFF") #mac
+target = Button(window, text="No target selected",font=soundStyle, width = 21, height=2, command=playTarget, bg="#FFFFFF") #windows
+
 target.grid(row=15, column=4, sticky=E)
 # Go button
-record = Button(window, text="Record vowel", font=soundStyle, width = 21, height=2, command=go, highlightbackground="#BBBBBB")
+#record = Button(window, text="Record vowel", font=soundStyle, width = 21, height=2, command=go, highlightbackground="#BBBBBB") #mac
+record = Button(window, text="Record vowel", font=soundStyle, width = 21, height=2, command=go, bg="#BBBBBB") #windows
 record.grid(row=15, column=4, sticky=W)
 
 # Recording message

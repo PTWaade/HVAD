@@ -749,9 +749,19 @@ def sex_change_all():
     sex_status["text"] = "Selected sex: Both    "
     schwa().plot()
 
-def help():
-    popup_window = Toplevel()
-    Label(popup_window, text = "Hej med dig jaja...\nHej med dig jaja...\nHej med dig jaja...\nHej med dig jaja...\nHihi").pack()
+class instructions:
+    n = 0
+    def __init__(self):
+        if self.n == 0:
+            window.plot = ImageTk.PhotoImage(Image.open(schwa.path + "img/instructions.png"))
+            plot_show.configure(image=window.plot)
+            instructions.n = 1
+        else:
+            window.plot = ImageTk.PhotoImage(Image.open(schwa.path + "img/plot.png"))
+            plot_show.configure(image=window.plot)
+            instructions.n = 0
+
+
 ######################################################################################
 ###_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_##
 ###_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_!InterFACE!_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_##
@@ -799,7 +809,7 @@ Button(window, text="Change representation", width = 20, command=rep().change_re
 
 # Help Button
 helpStyle = tkFont.Font(family="Lucida Grande", size=15)
-Button(window, text = "Help", command=help, font=helpStyle, height = 2, width= 8).grid(row=8,column=1, columnspan=3)
+Button(window, text = "Instructions", command=instructions, font=helpStyle, height = 2, width= 8).grid(row=8,column=1, columnspan=3)
 
 
 

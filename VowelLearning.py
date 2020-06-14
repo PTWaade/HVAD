@@ -751,13 +751,15 @@ class instructions:
     n = 0
     def __init__(self):
         if self.n == 0:
-            window.plot = ImageTk.PhotoImage(Image.open(schwa.path + "img/test.png"))
+            window.plot = ImageTk.PhotoImage(Image.open(schwa.path + "img/instructions.png"))
             plot_show.configure(image=window.plot)
             instructions.n = 1
+            instr_button["text"] = "Close"
         else:
             window.plot = ImageTk.PhotoImage(Image.open(schwa.path + "img/plot.png"))
             plot_show.configure(image=window.plot)
             instructions.n = 0
+            instr_button["text"] = "Instructions"
 
 
 ######################################################################################
@@ -807,8 +809,8 @@ Button(window, text="Change representation", width = 20, command=rep().change_re
 
 # Help Button
 helpStyle = tkFont.Font(family="Lucida Grande", size=15)
-Button(window, text = "Instructions", command=instructions, font=helpStyle, height = 2, width= 10).grid(row=8,column=1, columnspan=3, sticky=S)
-
+instr_button = Button(window, text = "Instructions", command=instructions, font=helpStyle, height = 2, width= 10)
+instr_button.grid(row=8,column=1, columnspan=3, sticky=S)
 
 
 

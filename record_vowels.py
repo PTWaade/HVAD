@@ -705,17 +705,12 @@ a_m2 = 434, 2184, 2782
 """
 """
 
-Opdater plot haløj
-
 Add eksempel ord
-add cut outlier
-hvis x kommer udenfor -> zoom ud
-fjern o u og scwa -> med toggle
+X add cut outlier
+X hvis x kommer udenfor -> zoom ud 
+X fjern o u og scwa 
+ -> med toggle
 
-2 rækker i e æ a...
-
-reset? 
-Error message
-
+X 2 rækker i e æ a..
 
 """
